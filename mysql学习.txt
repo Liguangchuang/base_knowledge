@@ -1,0 +1,616 @@
+登录数据库：
+	mysql -uroot -p1234
+查看所有库名：
+	show databases
+创建数据库：
+	create database lgc
+修改数据库：
+	alter database lgc_1   （改一下库名）
+
+使用指定的数据库（切换到指定的数据库）
+	use lgc	
+显示表名：
+	show tables（必须要先使用了数据库，才能显示表名称）
+查看表的内容：
+	select * from t1
+删除数据库：
+	drop database lgc
+
+DDL：
+
+创建表：
+	create table students(
+	id bigint,
+	name varchar(50),
+	email varchar(20),
+	age int  --注意，最后一行没有","
+	);  --主要末尾要带分号
+修改表：
+	添加列：
+		alter table 表名 add 列名 数据类型
+		alter table students add gender tinyint;
+	修改字段类型：
+		alter table 表名 modify 字段名 数据类型
+		alter table students modify name varchar(30);
+	修改表名：
+		rename table 原表名 新表名
+		rename table students new_stu;
+	修改字符集：
+		alter table 表名 character set 字符集名;
+	修改表列名：
+		alter table 表名 change 原列名 新列名 数据类型;
+		alter table students change stu_name s_name varchar(30);
+	删除一列：
+		alter table 表名 drop 字段名
+		alter table students drop stu_gender;
+	删除表：
+		drop table 表名
+		drop table students
+显示表结构：
+	desc 表名;
+	desc students;
+查看表的创建细节（查看表的创建语句，很重要）
+	show create table 表名;  --输出建表语句
+	show create table students;
+	
+DML：
+插入操作：（非常重要，在指定的表上插入记录）
+	insert into 表名(列名1，列名2) value(列值1，列值2) --指定表，指定列，插入记录
+	insert into students(id, stu_name, stu_age) value(3, 'wc', 2); --插入单条数据，指定列插入
+	insert into students(id, stu_name, stu_age) value(3, 'wc', 2), (4, 'qq', 10);  --插入多条数据
+	insert into students value(5, 'rr', 10), (4, 'qq', 10); --不写列名，则表示每个列都插入
+更新操作：（修改记录的值）
+	update 表名 set 列名1=列值1, 列名2=列值2 where 列名=值
+
+	update students set stu_score=90;  --把这列所有值全部改为90
+	update students set stu_score=90 where stu_name='zs';
+	update students set stu_age=20, stu_score=70 where stu_name='ls';  --修改多个值
+	update students set age=age+1 where stu_name='wc';  --修改多个值
+删除操作：
+	delete from 表名 [where 列名=值]
+	delete from students where id=1 --删除某条记录
+	delete from students --删除所有的数据（将表的数据清空，一般不这样用）
+	
+	truncate table 表名 --将整个表的数据清空，速度会更快（原理是先删除整个表，然后再重建字段）
+	truncate table students 
+	
+修改mysql的登录密码：
+	mysqladmin -u root -p password 123456 --讲密码密码修改为123456
+	弹出一个行：输入原来的密码便可
+
+DQL
+查询数据：
+	查询所有数据
+		select * from 表名; 
+		注意：虽然在控制台上展示了一个表，但只是一个“虚拟表”，是存放在内存里面的，
+		      并不会生成一个真正的表存放到数据库中，说白了只是给我们看一下而已
+	查询指定的列
+		select 列名1, 列名2 from 表名
+		select stu_name, stu_agg from students
+	条件查询：
+		where关键字；以及后面带的其他关键字：
+			=, !=, <>(注意，这两个都是不等于), <, <=, >, >=; (基础的数学运算符，与py一样)
+			between...and; 值在什么范围内
+			in(set); 固定范围值
+			is NULL; (为空) is not NULL;(不为空)
+			and; or; not; (与或非)
+		
+			select * from students where gender='男' and age=20;
+			select * from students where id=1001 or stu_name=20;
+			select * from students where id=1001 or id=1002 or id=1003;
+			select * from students where id in(1001,1002,1003); --与上一条语句的效果一样
+			select * from students where stu_name is null; --查询空值
+			select * from students where stu_name is not null; --查询非空
+			select * from students where gender != '男'; 
+			select * from students where age>=18 and age<=20; 
+			select * from students where age between 18 and 20; --与上条语句的效果一样 
+	模糊查询：
+		where关键字，like关键字，以及后面带的通配符
+			_：代表任意一个字符
+			%：代表0-n个字符
+			
+			--查询姓名由5个字符构成的学生记录
+			select * from students where stu_name like '_____'; --5个"_"
+			
+			--查询姓名由5个字符构成，并且第5个字母为"s"的学生记录
+			select * from students where stu_name like '____s' --4个"____"和一个"s"
+			
+			--查询姓名以m开头的学生记录
+			select * from students where stu_name like 'm%';
+			
+			--查询姓名中，第二个字母为"u"的学生记录
+			select * from students where stu_name like '_u%';
+			
+			--查询姓名中，包含"s"的学生记录
+			select * from students where stu_name like '%s%'; --汉字也行的，例如"%李%"
+			
+	字段控制查询：
+		去除重复记录：（去重很重要的啊）
+			select distinct stu_name from students where stu_name --对stu_name中去重 
+		结果运算生成新字段：
+			--可以对字段进行相加（必须要是数值型），来生成新的字段
+			select *, age+score from students; --查出所有结果，并且增加了新的列 
+			--IFNULL(score,0)，可以把空值填充为0
+			select *, IFNULL(age,0)+IFNULL(score,0) from students;
+		起别名：as(或者省略也行)，注意任意字段都可以用as起别名
+			字段起别名：select *, IFNULL(age,0)+IFNULL(score,0) as total from students;
+			表起别名：select * from student st, score sc;  --后面的多表查询
+			
+	排序：
+		order by关键字, (从小到大ASC，从大到小desc)
+		select * from employee order by salary; --不写，表示升序；
+		select * from employee order by salary asc; --也可以写，一样的意思
+		select * from employee order by salary desc; --表示降序
+		--先按工资降序排列，如果工资一样，则按id降序排列
+		select * from employee order by salary desc, id desc;
+	聚合函数：（非常非常重要，对查询的结果进行统计计算）
+		常用的聚合函数：
+			count()：统计指定列不为NULL的记录行数
+			max()：计算指定列的最大值；如果是字符串类型，则使用字符串排序运算
+			min()：最小值
+			sum()：计算指定列的数值之和；如果不是数值类型，则结果为0
+			avg()：计算指定列的平均值；如果不是数值类型，则结果为0
+	
+			select count(*) from employee; --查询表中有多少条记录
+			select count(performance) from employee; --查询员工表中，有绩效的人数
+			select count(*) from employee where salary>2500;--查询员工表中，月薪>2500的人数
+			--查询员工表中，月薪+绩效>5000的人数
+			select count(*) from employee where IFNULL(salary,0) + IFNULL(performance,0)>5000;
+			--查询有绩效的人数，和有管理费的人数
+			select count(performance), count(manage) from employee;
+			
+			select sum(salary) from employee; -- 查询所有雇员的月薪和
+			select sum(salary), sum(performance) from employee; -- 查询所有雇员的月薪和，以及绩效和
+			--查询所有雇员月薪 + 绩效和
+			select sum(IFNULL(salary,0) + IFNULL(performance,0)) from employee; 
+			select avg(salary) from employee; -- 查询所有雇员的平均工资
+			
+			select max(salary), min(salary) from employee; -- 查询所有雇员的平均工资		
+	
+	分组查询：
+		group by + group_concat()函数：
+			--对性别进行分组，全部显示，（最终只有两条记录，没什么意义）
+			select * from employee group by gender;  --group by单独使用，没什么意义，只出现两条记录（男，女）
+			
+			--对性别进行分组，而且只显示性别，只有两条记录（也没什么用）
+			select gender from employee group by gender;  --group by单独使用，没什么意义，只出现两条记录（男，女）
+			
+			--得到每个组，值的集合（使用分组时，select后面的字段一般都会出现在group by后面）
+			select gender, group_concat(`name`) from employee group by gender;  --分组查看，男的名字和女的名字
+		group by + 聚合函数：
+			--分组之后，对每一组的字段进行统计
+			--查询每个部门的部门名称和每个部门的工资和
+			select department, group_concat(`salary`) sum(salary) from employee group by department;  --(max, avg, min, count)
+			
+			--查询每个部门的部门名称和每个部门的人数
+			select department group_concat(`name`) count(`name`) from employee group by department;  
+			
+			--查询每个部门的部门名称，以及每个部门薪资大于1500的人数
+			select department, group_concat(`salary`), count(`name`) from employee where salary > 1500 group by department;
+		
+		group by + having:
+			分组查询后，指定一些条件来输出，相当于二级条件判断（where >> having）
+			
+			having是分组后才对数据进行过滤，
+			where是分组前对数据过滤，如果不满足where条件，则该记录不会参加分组
+			having后面可以使用统计函数，where不可以
+			书写顺序：select >> from >> where >> group by >> having >> order by >> limit
+			执行顺序：from >> where >> group by >> having >> select >> order by >> limit
+			
+			--查询工资总和大于9000的部门名称
+			select department from employee group by department having sum(salary)>=9000;
+			
+			--在工资大于2000的员工中，查询工资总和大于9000的部门名称以及工资和
+			select department group_concat(salary), sum(salary) from employee where salary>2000 group by department having sum(salary)>=9000, 
+				order by sum(salary) desc;
+				
+	limit:  参数1——从哪一行开始查，参数2——一共查几条
+		select * from employee limit 0,3; --从下表0开始，选择3条数据
+		select * from employee limit 3,3; --从下表3开始，选择3条数据
+		
+		
+	数据完整性：按照一定的规则，对输入的数据进行“约束”
+		实体完整性：
+			什么是实体：表中一条记录，代表一个实体
+			实体完整性的作用：标识每一行数据不重复，行级约束
+			约束类型：
+				主键约束：
+                    特点：
+                        每个表，一般设置一个主键
+                        主键那一列（或多列）的数据唯一，而且不能为NULL（非常重要）
+					添加方式：
+						create table person(字段1 数据类型 primary key, 字段2 数据类型);  --设置字段1为主键
+						create table person(字段1 数据类型, 字段2 数据类型, primary key(字段1));   --设置字段1为主键
+						
+						 --把多个字段放在一起，当做是一个主键（复合主键，这两个组合的字段不能重复便可）
+						create table person(字段1 数据类型, 字段2 数据类型, primary key(字段1, 字段2));  --设置字段1，字段2共同组成复合主键
+                        
+                        --先创建了表，然后再通过alter来设置主键
+						alter table person add constraint primary key(字段1)  --设置字段1为主键
+                        
+				唯一约束：
+                    特点：
+                        指定列的数据不能重复
+                        可以为空值
+                    格式：在数据类型后面加关键字UNIQUE
+                        create table student(id int primary key, `name` varchar(50) UNIQUE); --设置id为主键，设置name不能重复 
+
+				自动增长列：
+                    特点：
+                        指定列的数据自动增长
+                        即使数据删除，还是从删除的序号继续往下
+                    格式：在数据类型后面加关键字auto_increment
+                        create table student(id int primary key auto_increment, `name` varchar(50) UNIQUE); --设置id为主键且自动增长，设置name不能重复 
+		域完整性：
+            域：表示当前的单元格
+            使用：限制此单元格的数据正确，不与其他单元格做比较
+            域完整性约束：
+                数据类型：（在创建的字段后面，需要加上数据类型）
+                    数值型
+                    日期型
+                    字符串类型
+                非空约束：（在数据类型后面，加上UNIQUE not null）
+                默认值约束：
+                    create table student(id int primary key auto_increment, 
+                                         `name` varchar(50) UNIQUE not null, --非空约束
+                                         gender char(1) default '男'); --默认值约束
+            
+		参照完整性：（重要）
+			什么是参照完整性：
+				指表与表之间的对应关系；通常可以通过设置两表之间的主键、外键关系，（或者编写两表之间的触发器来实现）
+				有对应参照完整性的两张表，在对他们进行数据插入、更新、删除的过程中，系统会对数据进行约束，从而阻止一些不正确的操作
+			注意点：
+				数据库的主键和外键类型一定要一致
+				两个表必须是innoDB类型
+				设置参照完整性后，外键的值，必须是主键的内容（重要，就是上文讲的约束）
+				设置主键的表为主表，设置外键的表为子表
+			
+			添加方式：
+				--在创建的时候，添加外键
+				create table stu(id int primary key, name varchar(50), age int);  --主表
+				create table score(sid int, score int,   --字表
+								   constraint sc_st_fk foreign key(sid) references stu(id));  --外键sid，关联stu表的id主键
+								   --constraint约束，sc_st_fk对这个约束起一个名称（sc_st_fk一般不写，系统会自动起一个名称）
+								   --foreign key外键
+								   --references参照字段
+				
+				--创建完表以后，再添加外键
+				create table stu(id int primary key, name varchar(50), age int); --主表
+				create table score(sid int, score int); --子表
+				alter table score add constraint foreign key(sid) references stu(id));
+				
+		
+		表之间的关系：
+			一对一：（一般不管）
+			
+			一对多：就是上文中，主键表和外键表的关系
+				一个人可以拥有多辆汽车，每辆车只能属于一个人
+					create table person(id int primary key auto_increment, name varchar(50));  --人表
+					
+					create table car(name varchar(20), color varchar(20), pid int,   --车表，每辆车对应到一个人
+									 constraint c_p_fk foreign key(pid) references person(id));  --将车名name，关联到人id上  
+									 
+			多对多：
+				就是设置一个中间表，然后两个主表和这个中间表建立外键关系
+				
+				一个学生可以有多个老师，一个老师也可以有多个学生（必须要有一个中间表————学生与老师关系表）
+					--老师表
+					create table teach(tid int primary key, name varchar(50));
+					--学生表
+					create table stu(sid int primary key, name varchar(50));
+					--学生与老师关系表
+					create table tea_stu_rel(tid int, sid int);
+					--创建外键进行关联（）
+					alter table tea_stu_rel add constraint foreign key(tid) references teach(tid);
+					alter table tea_stu_rel add constraint foreign key(sid) references stu(sid);
+					
+			为什么要拆分表：
+				拆分表：也就是本来一个表也可以记录全部的数据，但是一般写成多个表，进行“一对多”，“多对多”的关联
+				作用：避免大量的数据冗余
+	
+	多表查询：
+		合并结果集：
+			是什么：把两个select语句的查询结果合并到一起
+			方式：
+				union：合并时去除重复记录
+				union all：合并时不去除重复记录
+			格式：
+				select * from 表1 union select * from 表2
+				select * from 表1 union all select * from 表2
+				
+				例如：
+					SELECT * from A   --("a",10), ("b",20)
+					UNION  --或"union all"
+					SELECT * from B   --("a",10), ("c",30)
+					结果：	--sname  |  score     (如果"union all"，则有四条记录，有一条会重复)
+						    --a      |  10
+							--b      |  20
+							--c      |  30
+				
+			注意：被合并的两个结果，列数，列类型必须相同
+			
+		连接查询：
+			是什么：也叫跨表查询，需要关联多个表进行查询
+			什么是笛卡尔集：假设有两个集合A={a,b}集合B={0,1,2}
+							则两个表的笛卡尔积是：(a,0),(a,1),(a,2),(b,0),(b,1),(b,2)
+							
+			同时查询多个表，则会出现笛卡尔集：
+				select * from A, B  --A:("a",10), ("b",20)，B:("a",30), ("c",40)
+					结果：	--sname  |  scorez  |  sname  |  scorez
+						    --a      |  10      |  a      |  30
+							--b      |  20      |  a      |  30
+							--a      |  10      |  c      |  40
+							--b      |  20      |  c      |  40
+				一般这样查是不对的，因为主键和外键对不上（上面的例子没有设置主外键，只是演示一下笛卡尔的情况）
+				
+			多表查询，怎么保证数据的正确性：
+				在查询时，保证主键和外键的一致(当然主外键只是在数据输入的时候做约束，查询是是没有约束的)：
+				原理是：先查出完整的笛卡尔集，然后再从中选出正确的数据（注意：“一对多”和“多对多”的时候，会出现笛卡尔集的现象）
+					select * from stu, score where stu.sid == score.sid  
+					
+			连接方式分类：
+				内连接
+					等值连接
+						select * from stu, score where stu.sid = score.sid  --与下面的inner join on写法的效果是一样的，称为99查询
+						select * from stu inner join score sc on stu.sid = sc.sid 
+							where sc.score >= 70 and st.gender = '男';  --(在后面可以再加where，把查询出的结果再做过滤)  
+						注意：“一对多”和“多对多”的时候，会出现笛卡尔集的现象
+						
+					多表链接：
+						待查询的多张表：学生信息表(stu)，学生考试分数表(score)，科目信息表(course)
+					
+						使用99连接法：
+							select st.name, sc.score, c.name from stu st, score sc, course c  --可以选择不同表的字段
+								where st.id = sc.sid and sc.cid = c.cid;
+						使用内连接法：
+							select st.name, sc.score, c.name from stu st 
+								join score sc on st.id = sc.sid  --inner可以省略不写
+								join course c on sc.cid = c.cid;
+					
+					非等值连接：
+						待查询的表：员工工资表(emp)，部门表(dept)，薪资等级表(salgrade)
+						需求：查询所有员工的姓名，工资，所在的部门名称以及工资的等级
+						
+						使用99写法：
+							select e.ename, e.salary, d.dname, g.grade from emp e, dept d salgrade g, 
+								where e.deptno = d.deptno and (e.salary between g.lowSalary and g.highSalary); --也可以用大于号和小于号写
+						使用join写法：
+							select e.ename, e.salary, d.dname, g.grade from emp e 
+								join dept d on e.deptno = d.deptno  
+								join salgrade g on e.salary between g.lowSalary and highSalary  --可以把上面两行看成一个完整的表，然后在这个表的基础上继续连接
+					
+					自然连接(属于内连接的一种特殊形式):
+						自然连接无需给出主外键等式，他会自动找到这个等式（一般99查询是要用主外键相等作为条件，来去除无用的笛卡尔集）
+						要求：两张连接的表，列名和类型要完全一致
+						连接结果：会去除相同的列（两个表需要进行连接的列，由于名字是相同的，就直接用一个列表示了）
+							select * from stu, score where stu.sid = score.sid;  --99连接
+							select * from stu join score on stu.sid = score.sid;  --内连接
+							select * from stu natural join score;  --自然连接（两个表的连接字段，列名和类型必须是相同的）
+																			 --（如果多列连接也一样，那么这些列的列名和类型也要一致）
+					
+				外连接
+					左连接
+						左表的“记录”全部查出来，右表的“记录”只有当满足条件才查出来（左表有而右表没有，则那些没有的设置为空），
+							select * from stu left join score sc on stu.sid = sc.sid; 
+					右连接
+						与左连接相反，右边所有数据都查出，左边只查出满足条件的数据
+		
+		子查询：
+			是什么：
+				一个select语句中包含另一个select语句
+				有两个以上的select语句，也是子查询
+			子查询出现的位置：
+				where之后，把select查询出的结果当做另一个select的条件值
+				from之后，把查询出的结果当做一个新表
+			例子：
+				待查询的表：员工工资表(emp)，部门表(dept)，薪资等级表(salgrade)
+				
+				查询与项羽同一个部门的员工  --where之后
+					select deptno from emp where ename='项羽'; -- >>  结果为20
+					select ename, deptno from emp where deptno = 20;
+				
+					--将这两个查询合并起来
+					select ename, deptno from emp 
+						where deptno = (select deptno from emp where ename='项羽');
+				
+				查询30号部门薪资大于2000的人员  --from之后
+					select ename, selary from 
+						(select ename, salary, deptno from emp where deptno = 30) s where s.salary > 2000;  --把查询结果当做一个新的表，并重命名为s
+		
+				查询工资高于程咬金的员工
+					select ename, salary from emp 
+						where salary > (select salary from emp where ename='程咬金');
+				
+				查询工资高于30号部门所有人的员工信息
+					select ename, salary from emp 
+						where salary > (select max(salary) from emp where deptno = 30);
+						
+				查询工作和工资都和妲己完全相同的员工信息
+					select * from emp 
+						where (job, salary) in (select job, salary from emp where ename = '妲己');  --in表示两个值都相同
+					
+					select * from emp e, (select job, salary from emp where ename = '妲己') r 
+						where e.job = r.job and e.salary = r.salary
+						
+				查询有两个直接下属的员工
+					select * from emp 
+						where empno in (select mgr from emp group by mgr having count(mgr) >=2)
+						
+				查询员工编号为7788的员工名称、员工工资、部门名称、部门地址
+					select e.ename, e.salary, d.dname, d.`local` from emp e, dept d where e.deptno = d.deptno and e.empno = 7788; 
+		
+		自连接：（重要）
+			自连接：自己连接自己————同一张表，起两个别名，就可以像两张表那样做连接使用了
+			
+			求73369员工编号、姓名、经理编号和经理姓名
+				select e1.empno, e1.ename, e2.empo, e2.ename from emp e1, emp e2 where e1.mgr = e2.empno and e1.empno=7369;
+	
+	########################################################################
+	权限操作：
+		什么是权限
+			限制一个用户能做什么事情，
+		有哪些权限：
+			
+		
+	索引：
+		什么是索引：
+		
+		添加索引
+		
+		btree和hash
+		
+		索引的创建和选择
+	
+	#########################################################################		
+	常用函数：
+		字符串函数：
+			concat('aa', 'bb');  >>  'aabb'
+				将传入的字符串拼接成一个长字符串
+				任何字符串与null连接，结果都是null
+			insert('abcdefg', 3, 2, '**');  >>  'ab**efg'
+				对于原始字符串，从指定位置开始，连续几个字符，变化为指定字符
+			lower('AA');  >>  'aa'   
+			upper('aa');  >>  'AA'
+				把字符串变成大写或小写
+			left('shanghai', 3);  >>  'sha'
+			right('shanghai', 3);  >>  'hai'
+				从左或有算起，返回字符串前n个字符
+			lpad('my', 4, '123456');  >>  '12my'
+			lpad('my', 4, '123456');  >>  'my12'
+				用指定的字符串进行左填充或右
+			ltrim(' my ');  >>  'my '
+			rtrim(' my ');  >>  ' my'
+			trim(' my ');  >>  'my'
+				去掉字符串左边、右边、或左右两边的空格
+			repeat('my', 4);  >>  "mymymymy"
+				将指定字符串重复n遍
+			repalce('ABCDEFG', 'CD', '**');  >>  "AB**EFG"
+				将字符串里面的内容进行替换
+			substring('myxq', 2, 3);  >>  'yxq'
+				在指定位置，截取固定长度的字符串
+			
+		数值函数：
+			ABS(x):返回绝对值
+				abs(-1)  >>  1
+			ceil(x):向上取整
+				ceil(1.1)  >>  2
+			floor(x):向下取整
+				floor(1.3)  >>  1
+			mode(x, y):求余
+				mode(9,2)  >>  1
+			rand():返回随机数
+				rand()  >>  0.36384956968463
+			ceil(rand()*k):返回0~k之间的整数
+				ceil(rand()*10)  >>  8
+			
+		日期和时间函数：
+			curdate():返回当前的日期
+			curtime():返回当前的时间
+			now():返回当前的日期和时间
+			unix_timestamp():返回当前的时间戳(从1970年开始，到当前的秒)
+			from_unixtime():将时间戳转化为日期
+			week(date):返回当前是一年中的第几周
+			year():返回所给日期是哪一年
+			hour():返回当前时间的小时
+			minute():返回当前时间的分钟
+			date_format(date, fmt):按字符串格式化日期的date值
+			date_add(date, interval, 31, day):
+				date_add(now(), interval, 3, day)  >>  2019-08-19 18:11:17
+				date_add(now(), interval, -3, day)  >>  2019-08-1 18:11:17
+			datediff(str_date1, str_date2):计算两个日期相差的天数
+				datediff('2019-08-15', now());  >>  -1
+		流程函数：
+			if(value, t, f):如果value是真，返回t，否则返回f
+				if(2>3, 'ture', 'false');  >>  true
+				select if ((select salary from emp where ename='李白')>5000, '经理', '员工')；
+			ifnull(value1, value2):如果value1不为空，则返回value1，否则返回value2
+			case when then end
+				select case when 2>3 then '对' else '错' end;  >>  '对'
+		其他函数：
+			database():返回当前数据库名称
+			version():返回当前数据库版本号
+			user():返回当前用户
+			password(str):对str进行加密
+			md5():返回str的md5值——也是加密
+			
+
+		用户自定义函数：
+			--随机生成一个指定个数的字符串
+			delimiter $$ --函数声明过程
+			create function rand_str(n int) returns varchar(255)
+			begin
+				--声明一个str 52个字母
+				declare str varchar(100) default 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+				--记录当前是第几个了
+				declare i int default 0;
+				--声明生成的结果
+				declare res_str varchar(255) default '';
+				while i < n do
+					set res_str = concat(res_str, substr(str, floor(1 + rand()*52), 1));  --随机在一个位置，截取一个字符，拼接成一个字符串
+					set i = i + 1;
+				end while;
+				return res_str;
+			end$$
+			delimiter
+			
+			select rand_str(5);  >>  auEgj
+	
+	#########################################################################	
+	视图：
+		什么是视图：
+			视图是一个虚拟表，其内容由查询定义
+			简单来讲，视图是由select结果组成的表
+		视图的特性：
+			视图是基于若干张表的引用，是一张虚表，是查询语句执行的结果
+			不存储具体的数据（基本表的数据发生了变化，视图也跟着改变）
+			跟基本表一样，可以进行增删改查操作
+		视图的作用：
+			安全性
+			提高查询性能
+			提高数据的独立性
+			
+		创建视图：
+			--简单版(一般用简单版就可以了)
+			create view emp_salary_view
+				as (select * from emp where salary>2000)
+				
+			--完整版（完整版只是做一个介绍）
+			create [ALGORITHM={UNDEFIEND | MERGE | TEMPTABLE}] view 视图名   
+				as select语句
+				[with [cascaded|local] check option];
+				
+			语句的参数：
+				ALGORITHM
+					--merge:在更新视图的数据时，真实表的数据也改变（如果不写，mysql默认就是这种方式）
+					--TEMPTABLE:视图数据更新，但真实表的数据不变（视图直接生成一张内存表）
+				with check option：
+					更新数据时，不能插入或更新不符合限制条件的记录
+						例如：下面这条语句，不能在视图emp_salary_view中，插入或更新salary小于2000的记录
+							create view emp_salary_view
+								as (select * from emp where salary>2000) with check option;
+				cascaded|local：不需要管
+			
+		视图查询：
+			--对视图的查询和对表的查询是一样的（这张表是一种查询逻辑，并没有真正创建一个真实的存有数据的表出来，但其操作跟真实的表是一样的）
+			select *  from emp_salary_view where job='经理'  --可以提高查询的效率，也提高写代码的效率
+				
+		修改视图;
+			create or replace view emp_salary_view  --将上面那个视图进行修改（将筛选>200改为400）
+				as (select * from emp where salary>400)
+			
+		删除视图：
+			drop view emp_salary_view;
+			
+		视图不可更新部分：
+			视图的数据是可以更新的，更新了数据的数据，原表的数据也跟着改变
+			但是，只要视图中的数据不是来源于基表，就不能直接更改
+			
+			create ALGORITHM=merge view avg_salary_view
+				as (select ename, salary avg(salary) from emp);
+				
+				avg_salary_view：
+				-- ename   salary   avg(salary)
+				--孙悟空  800      2812.56     
+					--avg(salary)这列的数据是不能更改的，因为这列不是来源于基表
+					--ename，salary这两列是基表的数据，可以更改
+		
